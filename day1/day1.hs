@@ -2,18 +2,19 @@
 -- Find the shortest path equivalent to a given sequence of movements
 -- and print the length of it, using "taxicab geometry"
 
-main = do
-    rawInput <- readFile "./input"
-    putStrLn $ show $ followPath starting_pos (parseInput rawInput)
+{-# Language TemplateHaskell #-} -- For Lenses
 
+import Control.Lens
 
 type Move = (Rotation, Int)
 
 data Direction  = North | South | East | West deriving Show
-data Position   = Position { x,y :: Int, direction :: Direction } deriving Show
+data Position   = Position { _x,_y :: Int, _direction :: Direction } deriving Show
 data Rotation   = L | R deriving (Read, Show)
 
-starting_pos = Position {x = 0, y = 0, direction = North }
+makeLenses '' Position
+
+starting_pos = Position {_x = 0, _y = 0, _direction = North }
 
 -- Step 1: Parse the input into a useful form: Done
 
@@ -38,31 +39,41 @@ followPath pos []           = pos
 
 -- main recursive function
 followPath pos (m:moves)    =
---    followPath move pos m
-    pos
+    -- doMove on m, and recurse on remainder
+    followPath (doMove pos m) moves
 
 
 doMove :: Position -> Move -> Position
 doMove pos move = pos -- boilerplate!
 
+    where
+        rotatedPos = over (direction) (rotateDir (fst move)) (pos)
 
-rotateDir :: Direction -> Char -> Direction
-rotateDir pos 'L' =
+
+rotateDir :: Rotation -> Direction -> Direction
+rotateDir L pos =
     case (pos) of
         North   -> West
         West    -> South
         South   -> East
         East    -> North
 
-rotateDir pos 'R' =
+rotateDir R pos =
     case (pos) of
         North   -> East
         East    -> South
         South   -> West
         West    -> North
 
-rotateDir _ _ = error "Only rotations L and R are valid!"
 
 -- Step 3: Find the shortest path to those coordinates
 
 -- Step 4: Print it's length.
+
+
+-- Apparently main needs to be last with TemplateHaskell?
+main = do
+    rawInput <- readFile "./input"
+    putStrLn $ show $ followPath starting_pos (parseInput rawInput)
+
+
