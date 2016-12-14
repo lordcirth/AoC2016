@@ -7,19 +7,25 @@ main = do
     putStrLn $ show $ parseInput rawInput
 
 
--- Step 1: Parse the input into a useful form
+-- Step 1: Parse the input into a useful form: Done
 
---parseInput :: String -> [(Char, Int)]
+type Move = (Char, Int)
+
+parseInput :: String -> [Move]
 parseInput rawInput =
     map (parseMove) moveList
     where
         moveList   = words $ filter (/= ',') rawInput
 
-parseMove :: String -> (Char, Int)
+parseMove :: String -> Move
 parseMove (dir:num) =
     (dir, read num :: Int)
 
+
 -- Step 2: Find the resulting coordinates of the given path
+followPath :: (Int, Int) -> [Move] -> (Int, Int)
+followPath (start_x, start_y) moves = (start_x, start_y)
+
 
 
 -- Step 3: Find the shortest path to those coordinates
