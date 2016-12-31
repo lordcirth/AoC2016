@@ -30,7 +30,7 @@ parseMove (dir:num) =
     (read [dir] :: Rotation, read num :: Int)
 
 
--- Step 2: Find the resulting coordinates of the given path
+-- Step 2: Find the resulting coordinates of the given path: Done
 
 followPath :: Position -> [Move] -> Position
 
@@ -44,10 +44,24 @@ followPath pos (m:moves)    =
 
 
 doMove :: Position -> Move -> Position
-doMove pos move = pos -- boilerplate!
-
+doMove pos move =
+    addPos rotatedPos moveForward
     where
-        rotatedPos = over (direction) (rotateDir (fst move)) (pos)
+        rotatedPos  = over (direction) (rotateDir (fst move)) (pos)
+        dist        = snd move
+        moveForward = case (rotatedPos^.direction) of
+            North   -> ( 0, dist)
+            West    -> (-dist, 0)
+            South   -> ( 0,-dist)
+            East    -> ( dist, 0)
+
+addPos :: Position -> (Int, Int) -> Position
+addPos pos (x2, y2) =
+    Position (x1+x2) (y1+y2) dir
+    where
+        dir = pos^.direction
+        x1  = pos^.x
+        y1  = pos^.y
 
 
 rotateDir :: Rotation -> Direction -> Direction
@@ -67,13 +81,15 @@ rotateDir R pos =
 
 
 -- Step 3: Find the shortest path to those coordinates
+pathLength :: Position -> Int
+pathLength pos =
+    abs (pos^.x) + abs (pos^.y)
+
 
 -- Step 4: Print it's length.
-
-
 -- Apparently main needs to be last with TemplateHaskell?
 main = do
     rawInput <- readFile "./input"
-    putStrLn $ show $ followPath starting_pos (parseInput rawInput)
+    putStrLn $ show $ pathLength $ followPath starting_pos (parseInput rawInput)
 
 
