@@ -31,16 +31,26 @@ parseMove (dir:num) =
 
 
 -- Step 2: Find the resulting coordinates of the given path: Done
-
-followPath :: Position -> [Move] -> Position
-
--- Recursive base case
-followPath pos []           = pos
+-- new version: get list of history, apply the move to the last one, compare
+followPath :: [Position] -> [Move] -> Position
 
 -- main recursive function
-followPath pos (m:moves)    =
+followPath history (m:moves)
+    -- is this a location we've been before?
+    | or $ map (isSameLocation newPos) history = newPos
+
+    -- Otherwise, recurse
+    | otherwise = followPath newHistory moves
     -- doMove on m, and recurse on remainder
-    followPath (doMove pos m) moves
+    where
+        newHistory  = newPos:history
+        newPos      = (doMove currentPos m)
+        currentPos  = head history
+
+-- Compare Positions, ignoring direction
+isSameLocation :: Position -> Position -> Bool
+isSameLocation a b =
+    (a^.x == b^.x) && (a^.y == b^.y)
 
 
 doMove :: Position -> Move -> Position
@@ -90,6 +100,7 @@ pathLength pos =
 -- Apparently main needs to be last with TemplateHaskell?
 main = do
     rawInput <- readFile "./input"
-    putStrLn $ show $ pathLength $ followPath starting_pos (parseInput rawInput)
+    --putStrLn $ show $ pathLength $ followPath starting_pos (parseInput rawInput)
+    putStrLn $ show $ pathLength $ followPath [starting_pos] (parseInput rawInput)
 
 
