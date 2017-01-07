@@ -36,16 +36,22 @@ followPath :: [Position] -> [Move] -> Position
 
 -- main recursive function
 followPath history (m:moves)
-    -- is this a location we've been before?
-    | or $ map (isSameLocation newPos) history = newPos
 
-    -- Otherwise, recurse
-    | otherwise = followPath newHistory moves
-    -- doMove on m, and recurse on remainder
+    -- Starting a new move?
+    | (snd m) == 0  = followPath (rotatedPos:history) (moves)
+
+    -- is this a location we've been before? If so, return the answer
+    | or $ map (isSameLocation forward) history = forward
+
+    -- Are we still in the middle of a move?
+    | (snd m) > 0   = followPath (forward:history) ((smallerMove):moves)
+
     where
-        newHistory  = newPos:history
-        newPos      = (doMove currentPos m)
+        --newHistory  = newPos:history
+        forward     = (doMove currentPos m)
         currentPos  = head history
+        rotatedPos  = over (direction) (rotateDir (fst (head moves) )) (currentPos)
+        smallerMove = over (_2) (subtract 1) m
 
 -- Compare Positions, ignoring direction
 isSameLocation :: Position -> Position -> Bool
@@ -55,15 +61,15 @@ isSameLocation a b =
 
 doMove :: Position -> Move -> Position
 doMove pos move =
-    addPos rotatedPos moveForward
+
+    addPos pos moveForward
     where
-        rotatedPos  = over (direction) (rotateDir (fst move)) (pos)
         dist        = snd move
-        moveForward = case (rotatedPos^.direction) of
-            North   -> ( 0, dist)
-            West    -> (-dist, 0)
-            South   -> ( 0,-dist)
-            East    -> ( dist, 0)
+        moveForward = case (pos^.direction) of
+            North   -> ( 0, 1)
+            West    -> (-1, 0)
+            South   -> ( 0,-1)
+            East    -> ( 1, 0)
 
 addPos :: Position -> (Int, Int) -> Position
 addPos pos (x2, y2) =
@@ -100,7 +106,7 @@ pathLength pos =
 -- Apparently main needs to be last with TemplateHaskell?
 main = do
     rawInput <- readFile "./input"
-    --putStrLn $ show $ pathLength $ followPath starting_pos (parseInput rawInput)
-    putStrLn $ show $ pathLength $ followPath [starting_pos] (parseInput rawInput)
+    -- We cons an empty move on the start because I'm bad at this
+    putStrLn $ show $ pathLength $ followPath [starting_pos] ((R,0):(parseInput rawInput))
 
 
